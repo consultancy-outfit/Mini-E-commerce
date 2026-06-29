@@ -35,6 +35,11 @@ export class ProductsController {
     return this.productsService.findAll(query);
   }
 
+  @Get(':id/suggestions')
+  getSuggestions(@Param('id') id: string) {
+    return this.productsService.getSuggestions(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AddToCartButton from '@/components/shop/AddToCartButton';
+import ProductCard, { type ProductSummary } from '@/components/shop/ProductCard';
 
 interface Product {
   id: string;
@@ -13,15 +14,25 @@ interface Product {
   createdAt: string;
 }
 
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+
 async function fetchProduct(id: string): Promise<Product | null> {
   try {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-    const res = await fetch(`${base}/products/${id}`);
-    if (res.status === 404) return null;
+    const res = await fetch(`${BASE}/products/${id}`);
     if (!res.ok) return null;
     return res.json();
   } catch {
     return null;
+  }
+}
+
+async function fetchSuggestions(id: string): Promise<ProductSummary[]> {
+  try {
+    const res = await fetch(`${BASE}/products/${id}/suggestions`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
   }
 }
 
@@ -31,7 +42,11 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = await fetchProduct(id);
+
+  const [product, suggestions] = await Promise.all([
+    fetchProduct(id),
+    fetchSuggestions(id),
+  ]);
 
   if (!product) notFound();
 
@@ -88,7 +103,6 @@ export default async function ProductDetailPage({
 
           <p className="mt-6 text-base leading-relaxed text-gray-600">{product.description}</p>
 
-          {/* Add to cart — client component placeholder wired in Phase 5 */}
           <div className="mt-8">
             <AddToCartButton productId={product.id} inStock={inStock} />
           </div>
@@ -103,6 +117,18 @@ export default async function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      {/* You may also like */}
+      {suggestions.length > 0 && (
+        <section className="mt-16">
+          <h2 className="mb-6 text-xl font-bold text-gray-900">You may also like</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {suggestions.map((s) => (
+              <ProductCard key={s.id} product={s} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

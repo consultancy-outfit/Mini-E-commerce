@@ -106,4 +106,62 @@ export class ProductsService {
     await this.findOne(id);
     await this.prisma.product.delete({ where: { id } });
   }
+
+  async getSuggestions(id: string) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException('Product not found');
+
+    const LIMIT = 4;
+
+    // Step 1: find orders that contain this product
+    const containing = await this.prisma.orderItem.findMany({
+      where: { productId: id },
+      select: { orderId: true },
+    });
+    const orderIds = [...new Set(containing.map((r) => r.orderId))];
+
+    let suggestionIds: string[] = [];
+
+    // Step 2: co-occurrence — other products bought in those same orders
+    if (orderIds.length > 0) {
+      const coItems = await this.prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+          orderId: { in: orderIds },
+          productId: { not: id },
+        },
+        _count: { productId: true },
+        orderBy: { _count: { productId: 'desc' } },
+        take: LIMIT,
+      });
+      suggestionIds = coItems.map((r) => r.productId);
+    }
+
+    // Step 3: fallback — same-category products to fill remaining slots
+    if (suggestionIds.length < LIMIT) {
+      const excluded = [id, ...suggestionIds];
+      const fallback = await this.prisma.product.findMany({
+        where: {
+          category: product.category,
+          id: { notIn: excluded },
+          stock: { gt: 0 },
+        },
+        take: LIMIT - suggestionIds.length,
+        orderBy: { createdAt: 'desc' },
+      });
+      suggestionIds.push(...fallback.map((p) => p.id));
+    }
+
+    if (suggestionIds.length === 0) return [];
+
+    // Fetch full details and preserve suggestion order
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: suggestionIds } },
+    });
+    const byId = new Map(products.map((p) => [p.id, p]));
+    return suggestionIds
+      .map((sid) => byId.get(sid))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined)
+      .map((p) => ({ ...p, price: p.price.toString() }));
+  }
 }
