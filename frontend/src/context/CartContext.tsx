@@ -37,6 +37,7 @@ interface CartContextValue {
   cart: Cart;
   isOpen: boolean;
   loading: boolean;
+  cartReady: boolean;
   openCart: () => void;
   closeCart: () => void;
   addItem: (productId: string, quantity?: number) => Promise<void>;
@@ -54,10 +55,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart>(EMPTY_CART);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cartReady, setCartReady] = useState(false);
 
   const refreshCart = useCallback(async () => {
     if (!token) {
       setCart(EMPTY_CART);
+      setCartReady(true);
       return;
     }
     try {
@@ -65,14 +68,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setCart(data);
     } catch {
       setCart(EMPTY_CART);
+    } finally {
+      setCartReady(true);
     }
   }, [token]);
 
   useEffect(() => {
+    setCartReady(false);
     if (user && token) {
       refreshCart();
     } else {
       setCart(EMPTY_CART);
+      setCartReady(true);
     }
   }, [user, token, refreshCart]);
 
@@ -138,6 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         cart,
         isOpen,
         loading,
+        cartReady,
         openCart: () => setIsOpen(true),
         closeCart: () => setIsOpen(false),
         addItem,
