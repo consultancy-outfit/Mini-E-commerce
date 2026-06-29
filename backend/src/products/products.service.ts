@@ -1,6 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryProductsDto, SortBy, SortOrder } from './dto/query-products.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -75,5 +81,29 @@ export class ProductsService {
       orderBy: { category: 'asc' },
     });
     return rows.map((r) => r.category);
+  }
+
+  async create(dto: CreateProductDto) {
+    try {
+      const product = await this.prisma.product.create({ data: dto });
+      return { ...product, price: product.price.toString() };
+    } catch (err: unknown) {
+      const e = err as { code?: string };
+      if (e.code === 'P2002') {
+        throw new ConflictException('A product with that name already exists');
+      }
+      throw err;
+    }
+  }
+
+  async update(id: string, dto: UpdateProductDto) {
+    await this.findOne(id);
+    const product = await this.prisma.product.update({ where: { id }, data: dto });
+    return { ...product, price: product.price.toString() };
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+    await this.prisma.product.delete({ where: { id } });
   }
 }
