@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Body,
   UseGuards,
   Headers,
   Req,
@@ -34,6 +35,19 @@ export class CheckoutController {
   @ApiResponse({ status: 401, description: 'Unauthorised' })
   createSession(@CurrentUser() user: JwtPayload) {
     return this.checkoutService.createSession(user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('confirm')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Confirm a completed Stripe session and create the order' })
+  @ApiResponse({ status: 201, description: 'Order created or returned if already exists' })
+  @ApiResponse({ status: 400, description: 'Payment not completed or cart unavailable' })
+  confirmSession(
+    @CurrentUser() user: JwtPayload,
+    @Body('sessionId') sessionId: string,
+  ) {
+    return this.checkoutService.confirmSession(user.sub, sessionId);
   }
 
   @Post('webhook')

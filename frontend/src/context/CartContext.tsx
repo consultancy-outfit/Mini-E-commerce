@@ -44,6 +44,7 @@ interface CartContextValue {
   updateItem: (productId: string, quantity: number) => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
   clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }
 
 const EMPTY_CART: Cart = { id: null, items: [], total: '0.00', itemCount: 0 };
@@ -152,6 +153,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateItem,
         removeItem,
         clearCart,
+        refreshCart,
       }}
     >
       {children}

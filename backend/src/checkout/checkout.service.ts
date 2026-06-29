@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
@@ -65,6 +66,72 @@ export class CheckoutService {
     }
 
     return { url: session.url };
+  }
+
+  async confirmSession(userId: string, sessionId: string) {
+    // Idempotency: return existing order if webhook already created it
+    const existing = await this.prisma.order.findUnique({
+      where: { stripeSessionId: sessionId },
+      include: { items: { include: { product: true } } },
+    });
+    if (existing) return existing;
+
+    // Verify payment with Stripe
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== 'paid') {
+      throw new BadRequestException('Payment not completed');
+    }
+
+    const cartId = session.metadata?.cartId;
+    if (!cartId) throw new InternalServerErrorException('Missing session metadata');
+
+    const cartItems = await this.prisma.cartItem.findMany({
+      where: { cartId },
+      include: { product: true },
+    });
+
+    if (cartItems.length === 0) {
+      throw new BadRequestException('Cart items no longer available');
+    }
+
+    const total = cartItems.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          userId,
+          status: 'PROCESSING',
+          total,
+          stripeSessionId: session.id,
+          stripePaymentId:
+            typeof session.payment_intent === 'string'
+              ? session.payment_intent
+              : null,
+          items: {
+            create: cartItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              priceAtPurchase: item.product.price,
+            })),
+          },
+        },
+        include: { items: { include: { product: true } } },
+      });
+
+      for (const item of cartItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+
+      await tx.cartItem.deleteMany({ where: { cartId } });
+
+      return order;
+    });
   }
 
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
