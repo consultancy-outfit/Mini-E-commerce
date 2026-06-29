@@ -29,6 +29,14 @@ export default function Navbar() {
             >
               Products
             </Link>
+            {user && (
+              <Link
+                href="/orders"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Orders
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
