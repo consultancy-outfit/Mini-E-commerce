@@ -3,6 +3,7 @@
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -58,6 +59,15 @@ export class AuthService {
     }
 
     return this.buildAuthResponse(user);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+    const match = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!match) throw new UnauthorizedException('Current password is incorrect');
+    const newHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
   }
 
   async getProfile(userId: string) {
