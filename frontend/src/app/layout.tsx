@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} h-full`}>
       <body className="min-h-full bg-gray-50 font-sans antialiased">
         <AuthProvider>
           <CartProvider>
