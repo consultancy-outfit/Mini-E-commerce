@@ -8,7 +8,7 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
     id: 'order-1',
     userId: 'user-1',
     status: 'PENDING',
-    total: { toString: () => '49.98' },
+    total: 49.98,
     stripeSessionId: 'cs_test_abc',
     createdAt: new Date('2024-06-01'),
     updatedAt: new Date('2024-06-01'),
@@ -18,7 +18,7 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
         orderId: 'order-1',
         productId: 'prod-1',
         quantity: 2,
-        priceAtPurchase: { toString: () => '24.99' },
+        priceAtPurchase: 24.99,
         product: {
           id: 'prod-1',
           name: 'Wireless Headphones',
@@ -53,14 +53,14 @@ describe('OrdersService', () => {
   });
 
   describe('findAll', () => {
-    it('returns orders with Decimal fields serialized to strings', async () => {
+    it('returns orders with Float total and priceAtPurchase', async () => {
       prismaMock.order.findMany.mockResolvedValue([makeOrder()]);
 
       const result = await service.findAll('user-1');
 
       expect(result).toHaveLength(1);
-      expect(result[0].total).toBe('49.98');
-      expect(result[0].items[0].priceAtPurchase).toBe('24.99');
+      expect(result[0].total).toBe(49.98);
+      expect(result[0].items[0].priceAtPurchase).toBe(24.99);
     });
 
     it('returns an empty array when the user has no orders', async () => {
@@ -73,14 +73,14 @@ describe('OrdersService', () => {
   });
 
   describe('findOne', () => {
-    it('returns the order with serialized totals', async () => {
+    it('returns the order with numeric totals', async () => {
       prismaMock.order.findFirst.mockResolvedValue(makeOrder());
 
       const result = await service.findOne('user-1', 'order-1');
 
       expect(result.id).toBe('order-1');
-      expect(result.total).toBe('49.98');
-      expect(result.items[0].priceAtPurchase).toBe('24.99');
+      expect(result.total).toBe(49.98);
+      expect(result.items[0].priceAtPurchase).toBe(24.99);
     });
 
     it('throws NotFoundException when the order does not belong to the user', async () => {

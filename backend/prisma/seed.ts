@@ -1,10 +1,8 @@
 import 'dotenv/config';
-import { PrismaClient, Role } from '../src/generated/prisma';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
-const adapter = new PrismaPg(process.env.DATABASE_URL as string);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 12);
@@ -17,25 +15,17 @@ async function main() {
   const adminPassword = await hashPassword('Admin123!');
   const customerPassword = await hashPassword('Customer123!');
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@shophub.com' },
-    update: {},
-    create: {
-      email: 'admin@shophub.com',
-      passwordHash: adminPassword,
-      role: Role.ADMIN,
-    },
-  });
+  const admin =
+    (await prisma.user.findUnique({ where: { email: 'admin@shophub.com' } })) ??
+    (await prisma.user.create({
+      data: { email: 'admin@shophub.com', passwordHash: adminPassword, role: Role.ADMIN },
+    }));
 
-  const customer = await prisma.user.upsert({
-    where: { email: 'customer@shophub.com' },
-    update: {},
-    create: {
-      email: 'customer@shophub.com',
-      passwordHash: customerPassword,
-      role: Role.CUSTOMER,
-    },
-  });
+  const customer =
+    (await prisma.user.findUnique({ where: { email: 'customer@shophub.com' } })) ??
+    (await prisma.user.create({
+      data: { email: 'customer@shophub.com', passwordHash: customerPassword, role: Role.CUSTOMER },
+    }));
 
   console.log(`✅ Users: admin (${admin.email}), customer (${customer.email})`);
 
@@ -193,7 +183,7 @@ async function main() {
     {
       name: 'System Design Interview Vol. 2',
       description:
-        'An insider\'s guide to system design interviews, covering large-scale distributed systems.',
+        "An insider's guide to system design interviews, covering large-scale distributed systems.",
       price: 29.99,
       imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
       category: 'Books',
@@ -250,17 +240,21 @@ async function main() {
 
   let productCount = 0;
   for (const p of products) {
-    await prisma.product.upsert({
-      where: { name: p.name },
-      update: {
-        description: p.description,
-        price: p.price,
-        imageUrl: p.imageUrl,
-        category: p.category,
-        stock: p.stock,
-      },
-      create: p,
-    });
+    const existing = await prisma.product.findUnique({ where: { name: p.name } });
+    if (existing) {
+      await prisma.product.update({
+        where: { name: p.name },
+        data: {
+          description: p.description,
+          price: p.price,
+          imageUrl: p.imageUrl,
+          category: p.category,
+          stock: p.stock,
+        },
+      });
+    } else {
+      await prisma.product.create({ data: p });
+    }
     productCount++;
   }
 

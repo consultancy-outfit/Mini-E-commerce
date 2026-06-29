@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+﻿import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,7 +11,7 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../generated/prisma';
+import { Role } from '@prisma/client';
 
 @ApiTags('Admin')
 @ApiBearerAuth('JWT')
@@ -25,7 +25,7 @@ export class AdminController {
   @ApiOperation({ summary: '[Admin] List all orders across all users' })
   @ApiResponse({ status: 200, description: 'All orders with items' })
   @ApiResponse({ status: 401, description: 'Unauthorised' })
-  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden â€” admin only' })
   findAllOrders() {
     return this.adminService.findAllOrders();
   }
@@ -34,7 +34,7 @@ export class AdminController {
   @ApiOperation({ summary: '[Admin] Update the status of an order' })
   @ApiParam({ name: 'id', description: 'Order UUID' })
   @ApiResponse({ status: 200, description: 'Updated order' })
-  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden â€” admin only' })
   @ApiResponse({ status: 404, description: 'Order not found' })
   updateOrderStatus(
     @Param('id') id: string,
@@ -44,9 +44,9 @@ export class AdminController {
   }
 
   @Get('analytics')
-  @ApiOperation({ summary: '[Admin] Sales analytics — revenue, orders, top products' })
+  @ApiOperation({ summary: '[Admin] Sales analytics â€” revenue, orders, top products' })
   @ApiResponse({ status: 200, description: 'Analytics summary' })
-  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden â€” admin only' })
   getAnalytics() {
     return this.adminService.getAnalytics();
   }

@@ -50,9 +50,7 @@ export class CheckoutService {
       line_items: cart.items.map((item) => ({
         price_data: {
           currency: 'usd',
-          unit_amount: Math.round(
-            parseFloat(item.product.price.toString()) * 100,
-          ),
+          unit_amount: Math.round(item.product.price * 100),
           product_data: { name: item.product.name },
         },
         quantity: item.quantity,
@@ -104,8 +102,7 @@ export class CheckoutService {
     if (cartItems.length === 0) return;
 
     const total = cartItems.reduce(
-      (sum, item) =>
-        sum + parseFloat(item.product.price.toString()) * item.quantity,
+      (sum, item) => sum + item.product.price * item.quantity,
       0,
     );
 

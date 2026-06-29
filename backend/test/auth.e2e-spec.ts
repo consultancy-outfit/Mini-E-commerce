@@ -212,7 +212,7 @@ describe('Auth (e2e)', () => {
         id: 'prod-1',
         name: 'Widget',
         description: 'A widget',
-        price: { toString: () => '9.99' },
+        price: 9.99,
         imageUrl: 'https://example.com/img.jpg',
         category: 'Tools',
         stock: 10,

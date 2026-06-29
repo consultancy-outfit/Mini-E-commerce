@@ -58,7 +58,7 @@ export class ProductsService {
     ]);
 
     return {
-      data: products.map((p) => ({ ...p, price: p.price.toString() })),
+      data: products,
       meta: {
         total,
         page,
@@ -71,7 +71,7 @@ export class ProductsService {
   async findOne(id: string) {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
-    return { ...product, price: product.price.toString() };
+    return product;
   }
 
   async getCategories(): Promise<string[]> {
@@ -85,8 +85,7 @@ export class ProductsService {
 
   async create(dto: CreateProductDto) {
     try {
-      const product = await this.prisma.product.create({ data: dto });
-      return { ...product, price: product.price.toString() };
+      return await this.prisma.product.create({ data: dto });
     } catch (err: unknown) {
       const e = err as { code?: string };
       if (e.code === 'P2002') {
@@ -98,8 +97,7 @@ export class ProductsService {
 
   async update(id: string, dto: UpdateProductDto) {
     await this.findOne(id);
-    const product = await this.prisma.product.update({ where: { id }, data: dto });
-    return { ...product, price: product.price.toString() };
+    return this.prisma.product.update({ where: { id }, data: dto });
   }
 
   async remove(id: string): Promise<void> {
@@ -161,7 +159,6 @@ export class ProductsService {
     const byId = new Map(products.map((p) => [p.id, p]));
     return suggestionIds
       .map((sid) => byId.get(sid))
-      .filter((p): p is NonNullable<typeof p> => p !== undefined)
-      .map((p) => ({ ...p, price: p.price.toString() }));
+      .filter((p): p is NonNullable<typeof p> => p !== undefined);
   }
 }

@@ -17,7 +17,6 @@ export class AdminService {
 
     return orders.map((o) => ({
       ...o,
-      total: o.total.toString(),
       itemCount: o._count.items,
     }));
   }
@@ -26,12 +25,10 @@ export class AdminService {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Order not found');
 
-    const updated = await this.prisma.order.update({
+    return this.prisma.order.update({
       where: { id },
       data: { status: dto.status },
     });
-
-    return { ...updated, total: updated.total.toString() };
   }
 
   async getAnalytics() {
@@ -72,17 +69,14 @@ export class AdminService {
     }));
 
     return {
-      totalRevenue: revenueResult._sum.total?.toString() ?? '0.00',
+      totalRevenue: revenueResult._sum.total ?? 0,
       totalOrders,
       ordersByStatus: ordersByStatus.map((o) => ({
         status: o.status,
         count: o._count._all,
       })),
       topProducts,
-      recentOrders: recentOrders.map((o) => ({
-        ...o,
-        total: o.total.toString(),
-      })),
+      recentOrders,
     };
   }
 }

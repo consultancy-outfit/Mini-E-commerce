@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   Controller,
   Delete,
@@ -25,7 +25,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../generated/prisma';
+import { Role } from '@prisma/client';
 
 @ApiTags('Products')
 @Controller('products')
@@ -74,7 +74,7 @@ export class ProductsController {
   @ApiOperation({ summary: '[Admin] Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created' })
   @ApiResponse({ status: 401, description: 'Unauthorised' })
-  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden â€” admin only' })
   create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
   }
@@ -86,7 +86,7 @@ export class ProductsController {
   @ApiOperation({ summary: '[Admin] Update a product' })
   @ApiParam({ name: 'id', description: 'Product UUID' })
   @ApiResponse({ status: 200, description: 'Updated product' })
-  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden â€” admin only' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
@@ -100,7 +100,7 @@ export class ProductsController {
   @ApiOperation({ summary: '[Admin] Delete a product' })
   @ApiParam({ name: 'id', description: 'Product UUID' })
   @ApiResponse({ status: 204, description: 'Deleted' })
-  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden â€” admin only' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);

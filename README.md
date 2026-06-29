@@ -4,7 +4,7 @@ Full-stack mini e-commerce platform with a customer storefront and admin panel.
 
 ## Stack
 
-- **Backend:** NestJS + Prisma + PostgreSQL
+- **Backend:** NestJS + Prisma 7 + MongoDB
 - **Frontend:** Next.js 16.2.9 (App Router) + Tailwind CSS 4
 - **Auth:** JWT (via NestJS Passport)
 - **Payments:** Stripe test mode
@@ -14,7 +14,7 @@ Full-stack mini e-commerce platform with a customer storefront and admin panel.
 ## Prerequisites
 
 - Node.js 18+
-- PostgreSQL running locally (or a connection string to a hosted instance)
+- MongoDB — either [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (free tier) or a local MongoDB 6+ instance running as a replica set (required for transactions)
 - A Stripe account (free) for test keys
 
 ---
@@ -39,7 +39,12 @@ cd ../frontend && npm install
 **Backend** — create `backend/.env`:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/ecommerce_db"
+# MongoDB Atlas (recommended for quick start):
+DATABASE_URL="mongodb+srv://USER:PASSWORD@cluster.mongodb.net/ecommerce_db?retryWrites=true&w=majority"
+
+# Local MongoDB replica set:
+# DATABASE_URL="mongodb://localhost:27017/ecommerce_db?replicaSet=rs0"
+
 JWT_SECRET="your-secret-here"
 JWT_EXPIRES_IN="7d"
 STRIPE_SECRET_KEY="sk_test_..."
@@ -47,6 +52,9 @@ STRIPE_WEBHOOK_SECRET="whsec_..."
 PORT=3001
 FRONTEND_URL="http://localhost:3000"
 ```
+
+> **Note:** MongoDB must run as a **replica set** to support transactions (used by the checkout webhook). MongoDB Atlas free tier is a replica set by default. For local development, start MongoDB with `--replSet rs0` and initialise with `rs.initiate()`.
+
 
 **Frontend** — create `frontend/.env.local`:
 
@@ -59,17 +67,14 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```bash
 cd backend
 
-# Create the database tables (runs the initial migration)
-npm run db:migrate
-# When prompted for a migration name, enter: init
+# Push the schema to MongoDB (creates collections and indexes)
+npm run db:push
 
 # Seed the database (admin user, customer user, 22 sample products)
 npm run db:seed
 ```
 
-> **Note:** This project uses Prisma 7. The connection URL is configured in
-> `prisma.config.ts` (for CLI/migrations) and read from `DATABASE_URL` at
-> runtime via the `@prisma/adapter-pg` driver adapter.
+> **Note:** This project uses Prisma 7 + MongoDB. There are no SQL migrations — schema changes are applied with `npm run db:push`. The connection URL is configured in `backend/.env` (`DATABASE_URL`) and in `prisma.config.ts` for CLI commands.
 
 ### 4. Start the apps
 

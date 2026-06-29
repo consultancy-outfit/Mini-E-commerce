@@ -9,7 +9,7 @@ function makeProduct(overrides: Record<string, unknown> = {}) {
     id: 'prod-1',
     name: 'Wireless Headphones',
     description: 'Noise-cancelling over-ear headphones',
-    price: { toString: () => '79.99' },
+    price: 79.99,
     imageUrl: 'https://example.com/headphones.jpg',
     category: 'Electronics',
     stock: 50,
@@ -47,7 +47,7 @@ describe('ProductsService', () => {
   });
 
   describe('findAll', () => {
-    it('returns paginated products with Decimal price serialized to string', async () => {
+    it('returns paginated products with Float price', async () => {
       prismaMock.product.findMany.mockResolvedValue([makeProduct()]);
       prismaMock.product.count.mockResolvedValue(1);
 
@@ -59,19 +59,19 @@ describe('ProductsService', () => {
       });
 
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].price).toBe('79.99');
+      expect(result.data[0].price).toBe(79.99);
       expect(result.meta).toEqual({ total: 1, page: 1, limit: 12, totalPages: 1 });
     });
   });
 
   describe('findOne', () => {
-    it('returns the product with price as a string', async () => {
+    it('returns the product with numeric price', async () => {
       prismaMock.product.findUnique.mockResolvedValue(makeProduct());
 
       const result = await service.findOne('prod-1');
 
       expect(result.id).toBe('prod-1');
-      expect(result.price).toBe('79.99');
+      expect(result.price).toBe(79.99);
     });
 
     it('throws NotFoundException for an unknown product id', async () => {
