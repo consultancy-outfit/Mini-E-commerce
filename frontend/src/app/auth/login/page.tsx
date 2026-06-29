@@ -19,8 +19,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      router.push('/shop');
+      const user = await login(email, password);
+      router.push(user.role === 'ADMIN' ? '/admin' : '/shop');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
