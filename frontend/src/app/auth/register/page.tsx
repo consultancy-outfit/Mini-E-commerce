@@ -127,6 +127,19 @@ export default function RegisterPage() {
       <div className="flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2 overflow-y-auto">
         <div className="w-full max-w-md">
 
+          {/* Back to store */}
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to store
+            </Link>
+          </div>
+
           <div className="mb-6 lg:hidden text-center">
             <Link href="/" className="text-2xl font-extrabold text-blue-600">ShopHub</Link>
           </div>
