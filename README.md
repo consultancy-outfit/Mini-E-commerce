@@ -60,12 +60,17 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```bash
 cd backend
 
-# Run migrations
-npx prisma migrate dev --name init
+# Create the database tables (runs the initial migration)
+npm run db:migrate
+# When prompted for a migration name, enter: init
 
-# Seed the database
-npx ts-node prisma/seed.ts
+# Seed the database (admin user, customer user, 22 sample products)
+npm run db:seed
 ```
+
+> **Note:** This project uses Prisma 7. The connection URL is configured in
+> `prisma.config.ts` (for CLI/migrations) and read from `DATABASE_URL` at
+> runtime via the `@prisma/adapter-pg` driver adapter.
 
 ### 4. Start the apps
 
