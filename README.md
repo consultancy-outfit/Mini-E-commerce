@@ -5,7 +5,7 @@ Full-stack mini e-commerce platform with a customer storefront and admin panel.
 ## Stack
 
 - **Backend:** NestJS + Prisma + PostgreSQL
-- **Frontend:** Next.js 14 (App Router) + Tailwind CSS
+- **Frontend:** Next.js 16.2.9 (App Router) + Tailwind CSS 4
 - **Auth:** JWT (via NestJS Passport)
 - **Payments:** Stripe test mode
 
@@ -36,7 +36,7 @@ cd ../frontend && npm install
 
 ### 2. Environment variables
 
-**Backend** — copy `.env.example` to `backend/.env` and fill in:
+**Backend** — create `backend/.env`:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/ecommerce_db"
@@ -48,11 +48,10 @@ PORT=3001
 FRONTEND_URL="http://localhost:3000"
 ```
 
-**Frontend** — copy `.env.example` to `frontend/.env.local` and fill in:
+**Frontend** — create `frontend/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ### 3. Database setup & seed
@@ -104,9 +103,25 @@ Use Stripe's test card: **4242 4242 4242 4242**, any future expiry, any CVC.
 ## Running Tests
 
 ```bash
-cd backend && npm run test        # unit tests
-cd backend && npm run test:e2e    # e2e tests
+# Unit tests — no database required (PrismaService fully mocked)
+cd backend && npm test
+
+# Unit tests with coverage report
+cd backend && npm run test:cov
+
+# E2E tests — no database required (PrismaService + CheckoutService mocked)
+cd backend && npm run test:e2e
 ```
+
+**Unit test files:**
+- `src/auth/auth.service.spec.ts` — register, login, password hashing, duplicate detection
+- `src/products/products.service.spec.ts` — pagination, 404 handling, suggestions (co-occurrence + fallback)
+- `src/orders/orders.service.spec.ts` — order listing, ownership scoping, Decimal serialization
+
+**E2E test file:**
+- `test/auth.e2e-spec.ts` — full HTTP layer tests for auth endpoints + public products API
+
+For more detail on the testing approach, see [`NOTES.md`](./NOTES.md).
 
 ---
 
@@ -114,26 +129,30 @@ cd backend && npm run test:e2e    # e2e tests
 
 ```
 e-commerce-assessment/
-├── backend/                  # NestJS API
+├── NOTES.md                  # Architecture decisions & trade-offs
+├── backend/                  # NestJS API (port 3001)
 │   ├── src/
-│   │   ├── prisma/           # PrismaService + PrismaModule
-│   │   ├── auth/             # JWT auth, guards, strategies
-│   │   ├── products/         # Product CRUD + suggestions
-│   │   ├── cart/             # Cart management
-│   │   ├── orders/           # Checkout + order history
-│   │   └── admin/            # Admin analytics
+│   │   ├── prisma/           # Global PrismaService (adapter-pg)
+│   │   ├── auth/             # JWT, bcrypt, JwtAuthGuard, RolesGuard
+│   │   ├── products/         # Catalogue CRUD + /suggestions
+│   │   ├── cart/             # Server-side cart (1:1 per user)
+│   │   ├── checkout/         # Stripe session + raw-body webhook
+│   │   ├── orders/           # Order history (customer view)
+│   │   └── admin/            # Admin orders, analytics
+│   ├── test/
+│   │   └── auth.e2e-spec.ts  # E2E tests (supertest, mocked Prisma)
 │   └── prisma/
-│       ├── schema.prisma     # All 6 data models
-│       └── seed.ts           # Seed script
-└── frontend/                 # Next.js storefront + admin
+│       ├── schema.prisma     # 6 models: User, Product, Cart, CartItem, Order, OrderItem
+│       └── seed.ts           # 2 users + 20 products
+└── frontend/                 # Next.js 16 App Router (port 3000)
     └── src/
         ├── app/
-        │   ├── shop/         # Product catalog + detail
-        │   ├── cart/         # Cart page
-        │   ├── checkout/     # Checkout flow
-        │   ├── orders/       # Order history
-        │   ├── auth/         # Login + register
-        │   └── admin/        # Admin panel (protected)
-        └── lib/
-            └── api.ts        # Shared fetch client
+        │   ├── shop/         # Catalogue + product detail + suggestions
+        │   ├── checkout/     # Cart summary → Stripe → success/cancel
+        │   ├── orders/       # Order history + detail
+        │   ├── admin/        # Dashboard, products CRUD, orders
+        │   └── (auth)/       # Login + register pages
+        ├── components/       # Navbar, ProductCard, ProductForm, CartDrawer
+        ├── context/          # AuthContext, CartContext
+        └── lib/              # apiFetch, order-utils
 ```
